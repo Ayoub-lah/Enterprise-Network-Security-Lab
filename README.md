@@ -23,7 +23,7 @@
 
 This project simulates a **production-ready enterprise network infrastructure** using industry-standard tools and technologies. The lab demonstrates real-world network engineering and security concepts including firewall high availability, encrypted tunnels, VLAN segmentation, intrusion prevention, and infrastructure monitoring.
 
-The project was designed and implemented as part of the **Master's program in IT Security & Big Data** at *Faculté des Sciences et Techniques de Tanger, Université Abdelmalek Essaâdi*.
+
 
 ---
 
