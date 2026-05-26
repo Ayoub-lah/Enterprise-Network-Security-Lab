@@ -458,48 +458,6 @@ https://localhost:8443
 
 ---
 
-## 📁 Repository Structure
-
-```
-Enterprise-Network-Security-Lab/
-│
-├── README.md                          # This file
-│
-├── docs/
-│   ├── rapport-final.pdf              # Complete lab report (FR)
-│   └── architecture/
-│       ├── global-architecture.drawio # Draw.io architecture file
-│       ├── workflow.png               # Project workflow diagram
-│       └── mermaid/
-│           ├── architecture-global.md
-│           ├── vlan-segmentation.md
-│           ├── vpn-architecture.md
-│           ├── ha-fortigate.md
-│           ├── security-flux.md
-│           └── ip-addressing.md
-│
-├── configs/
-│   ├── R3-Siege.txt                   # WAN Router configuration
-│   ├── R4-SiteA.txt                   # Site A Router configuration
-│   ├── R5-SiteB.txt                   # Site B Router configuration
-│   ├── SW-Core.txt                    # Core Switch configuration
-│   ├── FGT1-Master.txt                # FortiGate Master configuration
-│   └── FGT2-Backup.txt                # FortiGate Backup configuration
-│
-├── screenshots/
-│   ├── 01-eveng-topology.png
-│   ├── 02-fortigate-dashboard.png
-│   ├── 03-ha-cluster-status.png
-│   ├── 04-ipsec-vpn-tunnels.png
-│   ├── 05-ssl-vpn-portal.png
-│   ├── 06-ips-profiles.png
-│   ├── 07-firewall-policies.png
-│   ├── 08-snmp-test.png
-│   └── 09-vlan-dhcp.png
-│
-└── tests/
-    └── test-results.md                # Detailed test results
-```
 
 ---
 
