@@ -1,0 +1,479 @@
+# ============================================
+# FGT1-Master — FortiGate Primary Firewall
+# Enterprise Network Security Lab
+# Firmware: v7.0.9 build0444
+# ============================================
+
+# ============================================
+# SYSTEM GLOBAL
+# ============================================
+config system global
+    set hostname "FGT1-Master"
+    set timezone 28
+    set admin-port 80
+    set admin-sport 443
+    set admin-ssh-port 22
+    set dh-params 1024
+end
+
+# ============================================
+# INTERFACES
+# ============================================
+config system interface
+    edit "port1"
+        set vdom "root"
+        set ip 10.0.0.2 255.255.255.252
+        set allowaccess ping
+        set type physical
+        set alias "WAN1"
+        set role wan
+    next
+    edit "port2"
+        set vdom "root"
+        set type physical
+        set alias "LAN-Trunk"
+        set role lan
+    next
+    edit "port3"
+        set vdom "root"
+        set ip 192.168.56.200 255.255.255.0
+        set allowaccess ping https ssh http snmp
+        set type physical
+        set alias "Management"
+        set src-check disable
+    next
+    edit "port4"
+        set vdom "root"
+        set type physical
+        set alias "HA-Heartbeat"
+    next
+    edit "vlan10"
+        set vdom "root"
+        set ip 192.168.10.1 255.255.255.0
+        set allowaccess ping
+        set type vlan
+        set vlanid 10
+        set interface "port2"
+        set alias "Users"
+        set role lan
+    next
+    edit "vlan20"
+        set vdom "root"
+        set ip 192.168.20.1 255.255.255.0
+        set allowaccess ping
+        set type vlan
+        set vlanid 20
+        set interface "port2"
+        set alias "Servers"
+        set role lan
+    next
+    edit "vlan30"
+        set vdom "root"
+        set ip 192.168.30.1 255.255.255.0
+        set allowaccess ping
+        set type vlan
+        set vlanid 30
+        set interface "port2"
+        set alias "Guest"
+        set role lan
+    next
+    edit "vlan50"
+        set vdom "root"
+        set ip 192.168.50.1 255.255.255.0
+        set allowaccess ping
+        set type vlan
+        set vlanid 50
+        set interface "port2"
+        set alias "DMZ"
+        set role dmz
+    next
+end
+
+# ============================================
+# HIGH AVAILABILITY
+# ============================================
+config system ha
+    set group-name "FGT-HA"
+    set mode a-p
+    set password "ha-secret-password"
+    set hbdev "port4" 50
+    set session-pickup enable
+    set override disable
+    set priority 200
+end
+
+# ============================================
+# STATIC ROUTES
+# ============================================
+config router static
+    edit 1
+        set gateway 10.0.0.1
+        set device "port1"
+        set comment "Default route via R3"
+    next
+    edit 2
+        set dst 172.16.10.0 255.255.255.0
+        set device "VPN-SiteA"
+        set comment "Route to Site A via IPsec"
+    next
+    edit 3
+        set dst 172.16.20.0 255.255.255.0
+        set device "VPN-SiteB"
+        set comment "Route to Site B via IPsec"
+    next
+    edit 4
+        set dst 10.1.0.0 255.255.255.252
+        set gateway 10.0.0.1
+        set device "port1"
+    next
+    edit 5
+        set dst 10.2.0.0 255.255.255.252
+        set gateway 10.0.0.1
+        set device "port1"
+    next
+end
+
+# ============================================
+# DHCP SERVER — VLAN10 Users
+# ============================================
+config system dhcp server
+    edit 1
+        set dns-service default
+        set default-gateway 192.168.10.1
+        set netmask 255.255.255.0
+        set interface "vlan10"
+        config ip-range
+            edit 1
+                set start-ip 192.168.10.100
+                set end-ip 192.168.10.200
+            next
+        end
+        set domain "lab.local"
+    next
+    edit 2
+        set dns-service default
+        set default-gateway 192.168.20.1
+        set netmask 255.255.255.0
+        set interface "vlan20"
+        config ip-range
+            edit 1
+                set start-ip 192.168.20.100
+                set end-ip 192.168.20.200
+            next
+        end
+    next
+    edit 3
+        set dns-service default
+        set default-gateway 192.168.30.1
+        set netmask 255.255.255.0
+        set interface "vlan30"
+        config ip-range
+            edit 1
+                set start-ip 192.168.30.100
+                set end-ip 192.168.30.200
+            next
+        end
+    next
+    edit 4
+        set dns-service default
+        set default-gateway 192.168.50.1
+        set netmask 255.255.255.0
+        set interface "vlan50"
+        config ip-range
+            edit 1
+                set start-ip 192.168.50.100
+                set end-ip 192.168.50.200
+            next
+        end
+    next
+end
+
+# ============================================
+# IPSEC VPN — SITE A
+# ============================================
+config vpn ipsec phase1-interface
+    edit "VPN-SiteA"
+        set interface "port1"
+        set ike-version 1
+        set peertype any
+        set proposal des-sha256
+        set dhgrp 14
+        set remote-gw 10.1.0.2
+        set psksecret "VPN-SiteA-Secret123"
+        set comment "IPsec VPN to Site A"
+    next
+    edit "VPN-SiteB"
+        set interface "port1"
+        set ike-version 1
+        set peertype any
+        set proposal des-sha256
+        set dhgrp 14
+        set remote-gw 10.2.0.2
+        set psksecret "VPN-SiteB-Secret123"
+        set comment "IPsec VPN to Site B"
+    next
+end
+
+config vpn ipsec phase2-interface
+    edit "VPN-SiteA-P2"
+        set phase1name "VPN-SiteA"
+        set proposal des-sha1
+        set pfs disable
+        set src-subnet 192.168.10.0 255.255.255.0
+        set dst-subnet 172.16.10.0 255.255.255.0
+    next
+    edit "VPN-SiteB-P2"
+        set phase1name "VPN-SiteB"
+        set proposal des-sha1
+        set pfs disable
+        set src-subnet 192.168.10.0 255.255.255.0
+        set dst-subnet 172.16.20.0 255.255.255.0
+    next
+end
+
+# ============================================
+# SSL VPN
+# ============================================
+config vpn ssl settings
+    set servercert "Fortinet_Factory"
+    set tunnel-ip-pools "SSLVPN_TUNNEL_ADDR1"
+    set tunnel-ipv6-pools "SSLVPN_TUNNEL_IPv6_ADDR1"
+    set source-interface "port3"
+    set source-address "all"
+    set source-address6 "all"
+    set default-portal "full-access"
+    set port 10443
+    set port-precedence disable
+    set dtls-tunnel disable
+    config authentication-rule
+        edit 1
+            set groups "SSLVPN-Group"
+            set portal "full-access"
+        next
+    end
+end
+
+config vpn ssl web portal
+    edit "full-access"
+        set tunnel-mode enable
+        set web-mode enable
+        set ip-pools "SSLVPN_TUNNEL_ADDR1"
+        set split-tunneling disable
+    next
+end
+
+# ============================================
+# FIREWALL ADDRESS — SSL VPN POOL
+# ============================================
+config firewall address
+    edit "SSLVPN_TUNNEL_ADDR1"
+        set type iprange
+        set start-ip 10.10.10.10
+        set end-ip 10.10.10.100
+        set comment "SSL VPN tunnel address pool"
+    next
+end
+
+# ============================================
+# USER — SSL VPN
+# ============================================
+config user local
+    edit "vpnuser"
+        set type password
+        set passwd "VPNuser123!"
+    next
+end
+
+config user group
+    edit "SSLVPN-Group"
+        set member "vpnuser"
+    next
+end
+
+# ============================================
+# IPS SENSOR
+# ============================================
+config ips sensor
+    edit "IPS-Lab"
+        set comment "IPS profile for enterprise lab"
+        config entries
+            edit 1
+                set rule all
+                set action block
+                set log enable
+                set packet-log enable
+                set status enable
+            next
+        end
+        set block-malicious-url enable
+        set scan-botnet-connections block
+    next
+end
+
+# ============================================
+# WEB FILTER PROFILE
+# ============================================
+config webfilter profile
+    edit "WebFilter-Lab"
+        set comment "Web filter profile for enterprise lab"
+        config web
+            set blacklist enable
+        end
+    next
+end
+
+# ============================================
+# FIREWALL POLICIES
+# ============================================
+config firewall policy
+    edit 1
+        set name "Users-to-Internet"
+        set srcintf "vlan10"
+        set dstintf "port1"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set utm-status enable
+        set ssl-ssh-profile "certificate-inspection"
+        set ips-sensor "IPS-Lab"
+        set nat enable
+        set logtraffic all
+    next
+    edit 2
+        set name "Users-to-DMZ"
+        set srcintf "vlan10"
+        set dstintf "vlan50"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "HTTP" "HTTPS" "PING"
+        set utm-status enable
+        set ssl-ssh-profile "certificate-inspection"
+        set ips-sensor "IPS-Lab"
+        set logtraffic all
+    next
+    edit 3
+        set name "DMZ-block-LAN"
+        set srcintf "vlan50"
+        set dstintf "vlan10"
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+    edit 4
+        set name "Guest-Internet-only"
+        set srcintf "vlan30"
+        set dstintf "port1"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set nat enable
+        set logtraffic all
+    next
+    edit 5
+        set name "LAN-to-SiteA"
+        set srcintf "vlan10"
+        set dstintf "VPN-SiteA"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+    edit 6
+        set name "SiteA-to-LAN"
+        set srcintf "VPN-SiteA"
+        set dstintf "vlan10"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+    edit 7
+        set name "LAN-to-SiteB"
+        set srcintf "vlan10"
+        set dstintf "VPN-SiteB"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+    edit 8
+        set name "SiteB-to-LAN"
+        set srcintf "VPN-SiteB"
+        set dstintf "vlan10"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+    next
+    edit 9
+        set name "SSLVPN-to-LAN"
+        set srcintf "ssl.root"
+        set dstintf "vlan10"
+        set action accept
+        set srcaddr "all"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set utm-status enable
+        set ssl-ssh-profile "certificate-inspection"
+        set ips-sensor "IPS-Lab"
+        set groups "SSLVPN-Group"
+        set logtraffic all
+    next
+end
+
+# ============================================
+# SNMP
+# ============================================
+config system snmp sysinfo
+    set status enable
+    set description "FGT1-Master Enterprise Lab"
+    set contact-info "admin@lab.local"
+    set location "EVE-NG Lab"
+end
+
+config system snmp community
+    edit 1
+        set name "LabSNMP"
+        set status enable
+        config hosts
+            edit 1
+                set ip 192.168.56.0 255.255.255.0
+            next
+        end
+        set events cpu-high mem-low log-full intf-ip vpn-tun-up vpn-tun-down
+    next
+end
+
+# ============================================
+# LOG SETTINGS
+# ============================================
+config log memory filter
+    set severity information
+    set forward-traffic enable
+    set anomaly enable
+end
+
+config log memory setting
+    set status enable
+end
+
+# ============================================
+# END
+# ============================================

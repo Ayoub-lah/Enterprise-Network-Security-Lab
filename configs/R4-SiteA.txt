@@ -1,0 +1,60 @@
+! ============================================
+! R4-SiteA — Remote Site A Router
+! Enterprise Network Security Lab
+! ============================================
+
+hostname R4-SiteA
+!
+! ============================================
+! INTERFACES
+! ============================================
+interface GigabitEthernet0/0
+ description "WAN -> SW VLAN100"
+ ip address 10.1.0.2 255.255.255.0
+ duplex auto
+ speed auto
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description "LAN Site A"
+ ip address 172.16.10.1 255.255.255.0
+ duplex auto
+ speed auto
+ no shutdown
+!
+! ============================================
+! DEFAULT ROUTE
+! ============================================
+ip route 0.0.0.0 0.0.0.0 10.1.0.1
+!
+! ============================================
+! IPSEC VPN — TO FGT1 HEADQUARTERS
+! ============================================
+crypto isakmp policy 10
+ encr des
+ hash sha
+ authentication pre-share
+ group 2
+ lifetime 86400
+!
+crypto isakmp key VPN-SiteA-Secret123 address 10.0.0.2
+!
+crypto ipsec transform-set VPN-TRANSFORM esp-des esp-sha-hmac
+ mode tunnel
+!
+crypto map VPN-MAP 10 ipsec-isakmp
+ set peer 10.0.0.2
+ set transform-set VPN-TRANSFORM
+ match address VPN-ACL
+!
+! VPN ACL — Site A LAN <-> HQ Users VLAN10
+ip access-list extended VPN-ACL
+ permit ip 172.16.10.0 0.0.0.255 192.168.10.0 0.0.0.255
+!
+interface GigabitEthernet0/0
+ crypto map VPN-MAP
+!
+! ============================================
+! END
+! ============================================
+end

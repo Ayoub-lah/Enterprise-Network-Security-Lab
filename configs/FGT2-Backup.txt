@@ -1,0 +1,72 @@
+# ============================================
+# FGT2-Backup — FortiGate Backup Firewall
+# Enterprise Network Security Lab
+# Firmware: v7.0.9 build0444
+# ============================================
+# NOTE: FGT2 configuration is automatically
+# synchronized from FGT1-Master via HA.
+# Only base configuration shown below.
+# ============================================
+
+# ============================================
+# SYSTEM GLOBAL
+# ============================================
+config system global
+    set hostname "FGT2-Backup"
+    set timezone 28
+    set admin-port 80
+    set admin-sport 443
+end
+
+# ============================================
+# INTERFACES (Pre-HA sync)
+# ============================================
+config system interface
+    edit "port1"
+        set vdom "root"
+        set ip 10.0.0.6 255.255.255.252
+        set allowaccess ping
+        set type physical
+        set alias "WAN2"
+        set role wan
+    next
+    edit "port3"
+        set vdom "root"
+        set type physical
+        set alias "LAN-Trunk"
+        set role lan
+    next
+    edit "port4"
+        set vdom "root"
+        set type physical
+        set alias "HA-Heartbeat"
+    next
+end
+
+# ============================================
+# HIGH AVAILABILITY
+# ============================================
+config system ha
+    set group-name "FGT-HA"
+    set mode a-p
+    set password "ha-secret-password"
+    set hbdev "port4" 50
+    set session-pickup enable
+    set override disable
+    set priority 100
+end
+
+# ============================================
+# HA SYNC STATUS (verified)
+# ============================================
+# FGT1-Master # get system ha status
+# Master:  FGT1-Master  priority=200  in-sync
+# Slave:   FGT2-Backup  priority=100  in-sync ✅
+#
+# All other configuration (VLANs, VPN, Policies,
+# IPS, SSL VPN, SNMP) is synced from FGT1-Master.
+# ============================================
+
+# ============================================
+# END
+# ============================================

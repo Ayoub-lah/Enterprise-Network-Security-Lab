@@ -1,0 +1,112 @@
+! ============================================
+! SW-Core — Core L2 Switch Configuration
+! Enterprise Network Security Lab
+! ============================================
+
+hostname SW-Core
+!
+! ============================================
+! VLAN DATABASE
+! ============================================
+vlan 10
+ name Users
+!
+vlan 20
+ name Servers
+!
+vlan 30
+ name Guest
+!
+vlan 50
+ name DMZ
+!
+vlan 100
+ name WAN-SiteA
+!
+vlan 200
+ name WAN-SiteB
+!
+! ============================================
+! TRUNK PORTS — TO FORTIGATE
+! ============================================
+interface GigabitEthernet0/0
+ description "Trunk -> FGT1 port2"
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,50
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description "Trunk -> FGT2 port3"
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,50
+ no shutdown
+!
+! ============================================
+! ACCESS PORTS — REMOTE SITE ROUTERS
+! ============================================
+interface GigabitEthernet0/2
+ description "Access VLAN100 -> R4 SiteA"
+ switchport mode access
+ switchport access vlan 100
+ no shutdown
+!
+interface GigabitEthernet0/3
+ description "Access VLAN200 -> R5 SiteB"
+ switchport mode access
+ switchport access vlan 200
+ no shutdown
+!
+! ============================================
+! ACCESS PORTS — END DEVICES
+! ============================================
+interface GigabitEthernet1/0
+ description "Access VLAN10 -> PC7"
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+!
+interface GigabitEthernet1/1
+ description "Access VLAN10 -> PC8"
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+!
+interface GigabitEthernet1/2
+ description "Access VLAN50 -> PC9 DMZ"
+ switchport mode access
+ switchport access vlan 50
+ no shutdown
+!
+interface GigabitEthernet1/3
+ description "Access VLAN30 -> PC10 Guest"
+ switchport mode access
+ switchport access vlan 30
+ no shutdown
+!
+! ============================================
+! ACCESS PORTS — R3 WAN LINKS
+! ============================================
+interface GigabitEthernet2/0
+ description "Access VLAN100 -> R3 Gi0/2"
+ switchport mode access
+ switchport access vlan 100
+ no shutdown
+!
+interface GigabitEthernet2/1
+ description "Access VLAN200 -> R3 Gi0/3"
+ switchport mode access
+ switchport access vlan 200
+ no shutdown
+!
+interface GigabitEthernet2/2
+ description "Access VLAN10 -> Cloud0 Management"
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+!
+! ============================================
+! END
+! ============================================
+end
